@@ -1,0 +1,4 @@
+//PowerShell panelinizi açınız ve Kurulum için aşağıdaki komutu çalıştırınız
+Install-WindowsFeature AD-Domain-Services –IncludeManagementTools
+//Kurulum bittikten sonra yapılandırmak için ilk olarak forest oluşturunuz
+Install-ADDSForest –DomainName domain.com
