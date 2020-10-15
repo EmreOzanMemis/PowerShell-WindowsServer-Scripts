@@ -1,0 +1,2 @@
+$WebClient = New-Object System.Net.WebClient
+$WebClient.DownloadFile("http://<download linkinizi yazınız>","C:\dosya isminiz.formatı")
