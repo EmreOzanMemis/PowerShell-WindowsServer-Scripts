@@ -1,0 +1,58 @@
+# Firewall uzerinde tanimladiginiz kuralin adini yazınız
+$firewallRuleName = "RDP Atak Engelle"
+ 
+# Karalisteye eklenmetecek IP adreslerini yada hostnamelerini tanimlayiniz.
+$whiteList = @(
+   [System.Net.Dns]::GetHostAddresses("powershell-ozan, Ozan-WI, 192.168.2.101").IPAddressToString
+   )
+ 
+ 
+### kod ###
+Write-Host "Running at $(Get-Date)"
+$regExIp = "\d\d?\d?.\d\d?\d?.\d\d?\d?.\d\d?\d?"
+ 
+# RDS icin olusan Event loglardan 140 tanesini incele
+$currentAttackers = Get-Winevent Microsoft-Windows-RemoteDesktopServices-RdpCoreTS/Operational | Where-Object {$_.Id -eq 140} | Select Message -ExpandProperty Message
+ 
+# Response yok ise saldırı yoktur.
+if ($currentAttackers -eq $null) {
+   Write-Host "No current attackers"
+   return
+}
+ 
+# Her saldırı mesajını alın ve yukarıdaki regExIP'i kullanarak IP'yi filtreleyin
+for ($i = 0; $i -lt $currentAttackers.Count; $i++) {
+   if ($currentAttackers[$i] -match $regExIp){
+      $currentAttackers[$i] = $Matches[0]
+   }
+}
+ 
+# Bilinen saldırganları güvenlik duvarı kurallarından alın
+$knownAttackers = (Get-NetFirewallRule -DisplayName $firewallRuleName | Get-NetFirewallAddressFilter).RemoteAddress
+if ($knownAttackers -eq $null){
+   $knownAttackers = @()
+}
+$knownAttackers = $knownAttackers | Sort-Object -Unique
+ 
+# Kaydedilen her login kaydını kontrol et ve daha önce saldırgan olarak bilinip bilinmediğini kontrol et
+foreach($newAttacker in $currentAttackers) {
+   if ($knownAttackers.Contains($newAttacker)) { #Bilinen bir IP ise işlem yapma
+      continue
+   }
+   elseif ($whiteList -contains $newAttacker) { #Beyaz Listeye alınmış ise işlem yapma
+      Write-Host "$newAttacker is dynamically whitelisted"
+      continue
+   }
+   else{ #yeni bir saldırgan kara listeye ekle 
+      $knownAttackers += $newAttacker
+      Write-Host "Added $newAttacker"
+   }
+}
+ 
+# dublicate'leri kaldırın
+$knownAttackers = $knownAttackers | Sort-Object -Unique
+Write-Host "$($knownAttackers.Count) IPs on blacklist"
+ 
+# Tüm bilinen ve tüm yeni tespit edilen saldırganlarla Firwall kurallarını düzenle
+Set-NetFirewallRule -DisplayName $firewallRuleName "RDP Atak Engelle" -RemoteAddress $knownAttackers
+Write-Host ""
