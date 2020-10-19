@@ -1,0 +1,22 @@
+# Bu script coklu vm acmak icin hazirlanmistir.
+
+#VM isimlerini okuyacagi dosya tanimlamasini yapiniz
+$VMismi = Get-Content (Read-Host "VM isimleri olan dosyanın path giriniz.")
+
+#Kurulum yapacaginiz isletim sistemi ISOsunu tanimlayiniz.
+$ISOpath = Read-Host "ISOnuzun bulundugu dosyanın path giriniz."
+
+#VM diskinin olusacagi path belirtiniz.
+$VMyeri = "$Home\Hyper-V\Virtural Machines"
+
+#Virtual switch olusturup adini ve  turunu belirleiyin.
+New-VMSwitch -Name "PrivateNetwork" -SwitchType Private
+$VMNet = "PrivateNetwork"
+
+#VM olusturmak icin disk size, memory size ve pathleri tanimlayiniz.
+Foreach($vm in $VMismi) { New-VM -Name $VM -Generation 2 -SwitchName $VMNet 
+ New-VHD -Path "$VMyeri\$VM\$vm.vhdx" -Dynamic -SizeBytes 40GB
+ ADD-VMHardDiskDrive -VMismi $vm -Path "$VMLOC\$VM\$vm.vhdx"
+ Set-VM $VM -MemoryMinimumBytes 1GB
+ Add-VMDvdDrive -VMismi $vm -Path $ISOpath
+}
