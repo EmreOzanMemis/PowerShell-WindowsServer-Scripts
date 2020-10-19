@@ -1,0 +1,90 @@
+### WUSUS post-deplpyment yapilandirma ayarlari 
+. "C:\Program Files\Update Services\Tools\WsusUtil.exe" postinstall CONTENT_DIR=C:\WSUS 
+  
+### WSUS nesnesinin tanımlanması 
+$wsus = Get-WSUSServer 
+  
+### WSUS yapilandirma tanimlamasi 
+$wsusConfig = $wsus.GetConfiguration() 
+### Microsoft güncellemelerinin yapilandirilamsi 
+Set-WsusServerSynchronization –SyncFromMU 
+  
+### Güncelleme paketi dil tanımlaması sadece ingilizce yapilandirilmisiti bu bölümde istediğiniz dilleri virgul ekleyerek kısa kodunu yazabilirsiniz. 
+$wsusConfig.AllUpdateLanguagesEnabled = $false           
+$wsusConfig.SetEnabledUpdateLanguages("en")           
+$wsusConfig.Save() 
+  
+### WSUS ve Microsoft güncelleme SYNC tanimlamasi 
+$wsus.GetSubscription().StartSynchronizationForCategoryOnly() 
+start-sleep 15 
+  
+### SYNC tanimlamasi 
+while ($wsus.GetSubscription().GetSynchronizationStatus() -ne "NotProcessing") { 
+$time = get-date -UFormat "%H:%M:%S" 
+$total = $wsus.GetSubscription().getsynchronizationprogress().totalitems 
+$processed = $wsus.GetSubscription().getsynchronizationprogress().processeditems 
+$process = $processed/$total 
+$progress = "{0:P0}" -f $process 
+Write-Host "" 
+Write-Host "The first synchronization isn't completed yet $time" 
+Write-Host "Kindly have patience, the progress is $progress" 
+Start-Sleep 10 
+} 
+Write-Host "The synchronization has completed at $time" -ForegroundColor Green 
+Write-Host "The WSUS Configuration will now continue"  -ForegroundColor Green 
+  
+### Guncelleme urunlerinin tanimlanmasi, bu bolumu genisletebilrisiniz. Ben örnek için sadece Windows Server 2019 ekledim scritpti genisleterek diger urunleride ekleyebilirsiniz. 
+write-host 'Setting WSUS Products' 
+Get-WsusProduct | where-Object { 
+    $_.Product.Title -in ( 
+    'Windows Server 2019') 
+} | Set-WsusProduct 
+  
+### Guncelleme sinfilarinin tanimlanmasi yine bu bolumde de siniflari arttirabilir yada azaltabilirsiniz. 
+write-host 'Setting WSUS Classifications' 
+Get-WsusClassification | Where-Object { 
+    $_.Classification.Title -in ( 
+    'Critical Updates', 
+    'Definition Updates', 
+    'Feature Packs', 
+    'Security Updates', 
+    'Service Packs', 
+    'Update Rollups', 
+    'Updates') 
+} | Set-WsusClassification 
+  
+### SYNC yapilandirmasi 
+write-host 'Enabling WSUS Automatic Synchronisation' 
+$subscription = $wsus.GetSubscription() 
+$subscription.SynchronizeAutomatically=$true 
+  
+### otomatik sync yapilandirmasi 
+$subscription.SynchronizeAutomaticallyTimeOfDay= (New-TimeSpan -Hours 0) 
+$subscription.NumberOfSynchronizationsPerDay=1 
+$subscription.Save() 
+  
+### Guncellenecek hedef grubun belirlenmesi 
+$wsus.CreateComputerTargetGroup("Updates") 
+  
+### Guncelleme paketlerinin onaylanmasi 
+write-host 'Configuring default automatic approval rule' 
+[void][reflection.assembly]::LoadWithPartialName("Microsoft.UpdateServices.Administration") 
+$rule = $wsus.GetInstallApprovalRules() | Where { 
+    $_.Name -eq "Default Automatic Approval Rule"} 
+$class = $wsus.GetUpdateClassifications() | ? {$_.Title -In ( 
+    'Critical Updates', 
+    'Security Updates')} 
+$class_coll = New-Object Microsoft.UpdateServices.Administration.UpdateClassificationCollection 
+$class_coll.AddRange($class) 
+$rule.SetUpdateClassifications($class_coll) 
+$rule.Enabled = $True 
+$rule.Save() 
+  
+### Computer groupların güncelleme islemi 
+  
+  
+$wsusConfig.OobeInitialized = $true 
+$wsusConfig.Save() 
+  
+### SYNC baslamasi 
+$wsus.GetSubscription().StartSynchronization() 
