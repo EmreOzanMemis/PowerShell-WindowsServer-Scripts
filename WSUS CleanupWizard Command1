@@ -1,5 +1,6 @@
 Get-WsusServer | Invoke-WsusServerCleanup -CleanupObsoleteComputers
 
+Get-WsusServer | Invoke-WsusServerCleanup -CleanupObsoleteComputers -CleanupObsoleteUpdates
 
 
 Invoke-WsusServerCleanup
