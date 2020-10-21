@@ -1,1 +1,15 @@
 Get-WsusServer | Invoke-WsusServerCleanup -CleanupObsoleteComputers
+
+
+
+Invoke-WsusServerCleanup
+      [-UpdateServer <IUpdateServer>]
+      [-CleanupObsoleteComputers]
+      [-CleanupObsoleteUpdates]
+      [-CleanupUnneededContentFiles]
+      [-CompressUpdates]
+      [-DeclineExpiredUpdates]
+      [-DeclineSupersededUpdates]
+      [-WhatIf]
+      [-Confirm]
+      [<CommonParameters>]
