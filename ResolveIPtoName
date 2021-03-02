@@ -10,3 +10,8 @@ foreach ($IP in $IPList) {
          
 $ResolvingResults | Select AddressList, HostName 
     }
+
+
+
+###PowerShell üzerinde####
+ResolveIPtoName IPadresigiriniz
