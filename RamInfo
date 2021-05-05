@@ -1,0 +1,9 @@
+Get-WmiObject Win32_PhysicalMemory | Format-Table BankLabel, Capacity, Manufacturer
+
+Get-WmiObject Win32_PhysicalMemory | Select-Object FormFactor
+
+Get-WmiObject Win32_PhysicalMemory | Select-Object Speed
+
+Get-WmiObject Win32_PhysicalMemory | Select-Object PartNumber, SerialNumber
+
+Get-WmiObject Win32_PhysicalMemory | Format-List *
