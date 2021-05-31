@@ -1,0 +1,5 @@
+Get-MessageTrackingLog -ResultSize Unlimited -Start "09/16/2020 14:00:00" -End "09/16/2020 16:100:00" -Recipients "postmaster@domain.net"
+
+Get-MessageTrackingLog -ResultSize Unlimited -Start "05/10/2021 12:20:00" -End "05/10/2020 12:44:00" -sender "postmaster@domain.net"
+
+Get-Queue
