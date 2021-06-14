@@ -1,0 +1,1 @@
+Get-ADComputer -Filter * -Properties OperatingSystem | ft -Property Name, OperatingSystem
