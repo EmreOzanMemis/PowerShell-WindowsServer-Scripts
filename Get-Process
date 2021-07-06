@@ -23,3 +23,8 @@ Get-Process |
 Get-Process | 
     Sort-Object CPU -Descending | 
     Select-Object ProcessName, CPU -First 10
+    
+ # or 
+ 
+
+ Get-Process | Select-Object ProcessName, CPU | Sort-Object CPU -Descending    
